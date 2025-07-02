@@ -26,9 +26,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Решение 1: Использование Docker для проверки
       - name: Wait for Postgres
         run: |
-          until pg_isready -h localhost -p 5432 -U kubsu; do
+          until docker run --rm --network host postgres:14 pg_isready -h localhost -p 5432 -U kubsu; do
             echo "Waiting for Postgres..."
             sleep 2
           done
@@ -46,7 +47,6 @@ jobs:
             -e PYTHONPATH=/app \
             myapp:test \
             pytest tests
-
 
       - name: Build prod image
         run: docker build -t myapp:latest .
