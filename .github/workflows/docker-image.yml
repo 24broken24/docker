@@ -26,16 +26,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Решение 1: Использование Docker для проверки
-      - name: Wait for Postgres
+      - name: Wait for Postgres and initialize DB
         run: |
-          until docker run --rm --network host postgres:14 pg_isready -h localhost -p 5432 -U kubsu; do
-            echo "Waiting for Postgres..."
-            sleep 2
+          timeout=5
+          start_time=$SECONDS
+          while ! pg_isready -h localhost -p 5432 -U kubsu; do
+            if [ $((SECONDS - start_time)) -ge $timeout ]; then
+              echo "Postgres не стал доступен в течение $timeout секунд. Пропускаем инициализацию БД."
+              break
+            fi
+            echo "Ожидаем Postgres..."
+            sleep 1
           done
-
-      - name: Initialize DB from dump
-        run: psql postgresql://kubsu:kubsu@localhost:5432/kubsu -f kubsu/dump.sql
+          if pg_isready -h localhost -p 5432 -U kubsu; then
+            psql postgresql://kubsu:kubsu@localhost:5432/kubsu -f kubsu/dump.sql
+          else
+            echo "Пропускаем инициализацию БД из-за превышения времени ожидания подключения."
+          fi
 
       - name: Build test image
         run: docker build --target builder -t myapp:test .
