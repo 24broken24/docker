@@ -8,4 +8,4 @@ bruh
 
 
 
-ia mamu etogo dock
+ia mamu etogo do
