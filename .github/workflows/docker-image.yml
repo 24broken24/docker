@@ -59,12 +59,10 @@ jobs:
         run: docker build -t myapp:latest .
 
       - name: Set up SSH
-        run: |
-              echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/ssh_key
-              chmod 600 /tmp/ssh_key
-              ssh-agent -a /tmp/ssh_agent.sock
-              SSH_AUTH_SOCK=/tmp/ssh_agent.sock ssh-add /tmp/ssh_key
-
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
       - name: Deploy to remote server
         run: |
           docker save myapp:latest | \
