@@ -1,4 +1,4 @@
-bruh bruh
+bruh bru
 
 
 
