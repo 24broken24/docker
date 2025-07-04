@@ -49,7 +49,7 @@ jobs:
         run: |
           docker build \
             --target builder \
-            --file docker/Dockerfile \
+            --file Dockerfile \
             --tag myapp:test \
             docker/
 
@@ -69,7 +69,7 @@ jobs:
       - name: Build prod image
         run: |
           docker build \
-            --file docker/Dockerfile \
+            --file Dockerfile \
             --tag myapp:latest \
             docker/
 
