@@ -30,19 +30,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Wait for Postgres
-        run: |
-          echo "Sleeping 20s for Postgres to initialize..."
-          sleep 20
-      - name: Initialize DB from dump
-        run: |
-          cat "${{ github.workspace }}/kubsu/dump.sql" \
-            | docker run --rm -i \
-                --network host \
-                -e PGPASSWORD=kubsu \
-                postgres:14 \
-                psql -h localhost -U kubsu -d kubsu
+        
       - name: Build test image
         run: docker build --target builder -t myapp:test .
 
