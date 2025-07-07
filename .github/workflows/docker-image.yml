@@ -1,5 +1,10 @@
+
 name: CI & Deploy
 
+permissions:
+  contents: read
+  packages: write
+  
 on:
   push:
     branches: [main]
@@ -7,6 +12,7 @@ on:
 jobs:
   build-test-deploy:
     runs-on: self-hosted
+
     services:
       postgres:
         image: postgres:14
@@ -19,24 +25,24 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U kubsu"
           --health-interval 10s
-          --health-timeout 10s
-          --health-retries 10
-
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check Postgres Service
-        run: docker ps -a
-
       - name: Wait for Postgres
         run: |
-          export PGPASSWORD=kubsu
-          timeout 30s bash -c "until pg_isready -h localhost -p 5432 -U kubsu; do echo 'Waiting for Postgres...'; sleep 2; done" || echo "Timeout reached, continuing..."
-
+          echo "Sleeping 20s for Postgres to initialize..."
+          sleep 20
       - name: Initialize DB from dump
-        run: psql postgresql://kubsu:kubsu@localhost:5432/kubsu -f kubsu/dump.sql
-
+        run: |
+          cat "${{ github.workspace }}/kubsu/dump.sql" \
+            | docker run --rm -i \
+                --network host \
+                -e PGPASSWORD=kubsu \
+                postgres:14 \
+                psql -h localhost -U kubsu -d kubsu
       - name: Build test image
         run: docker build --target builder -t myapp:test .
 
@@ -47,7 +53,6 @@ jobs:
             -e PYTHONPATH=/app \
             myapp:test \
             pytest tests
-
       - name: Build prod image
         run: docker build -t myapp:latest .
 
