@@ -1,10 +1,5 @@
-
 name: CI & Deploy
 
-permissions:
-  contents: read
-  packages: write
-  
 on:
   push:
     branches: [main]
@@ -12,7 +7,6 @@ on:
 jobs:
   build-test-deploy:
     runs-on: self-hosted
-
     services:
       postgres:
         image: postgres:14
@@ -27,10 +21,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
+      - name: Initialize DB from dump
+        run: psql postgresql://kubsu:kubsu@localhost:5432/kubsu -f kubsu/dump.sql
+
       - name: Build test image
         run: docker build --target builder -t myapp:test .
 
@@ -41,6 +39,8 @@ jobs:
             -e PYTHONPATH=/app \
             myapp:test \
             pytest tests
+
+
       - name: Build prod image
         run: docker build -t myapp:latest .
 
